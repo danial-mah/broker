@@ -1,0 +1,25 @@
+{
+  "name": "broker-platform",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Modern full-stack broker and trading dashboard monorepo.",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md,css}\"",
+    "db:generate": "pnpm --filter @broker/api prisma:generate",
+    "db:migrate": "pnpm --filter @broker/api prisma:migrate",
+    "db:seed": "pnpm --filter @broker/api prisma:seed"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "prettier": "^3.5.3",
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.3"
+  },
+  "packageManager": "pnpm@10.10.0"
+}
