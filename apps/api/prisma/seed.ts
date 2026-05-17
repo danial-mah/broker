@@ -1,5 +1,24 @@
 import { AssetType, PrismaClient, Role } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+function loadRootEnv() {
+  const envPath = resolve(__dirname, '../../../.env');
+  if (!existsSync(envPath)) {
+    return;
+  }
+
+  for (const line of readFileSync(envPath, 'utf8').split(/\r?\n/)) {
+    const match = line.match(/^([A-Z0-9_]+)=(.*)$/);
+    if (!match || process.env[match[1]]) {
+      continue;
+    }
+    process.env[match[1]] = match[2].replace(/^"|"$/g, '');
+  }
+}
+
+loadRootEnv();
 
 const prisma = new PrismaClient();
 
