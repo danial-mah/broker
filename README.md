@@ -41,7 +41,7 @@ pnpm install
 cp .env.example .env
 docker compose up -d postgres redis
 pnpm db:generate
-pnpm db:migrate
+pnpm db:push
 pnpm db:seed
 pnpm dev
 ```
