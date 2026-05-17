@@ -37,7 +37,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   return (
     <Card className="mx-auto w-full max-w-md">
       <h1 className="mb-2 text-2xl font-semibold">{mode === 'login' ? 'Login' : 'Create account'}</h1>
-      <p className="mb-6 text-sm text-slate-400">Secure access to the trading workspace.</p>
+      <p className="mb-6 text-sm text-muted">Secure access to the trading workspace.</p>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         {mode === 'register' && <Input placeholder="Name" {...form.register('name')} />}
         <Input placeholder="Email" type="email" {...form.register('email')} />

@@ -13,8 +13,8 @@ export default function WalletPage() {
 
   return (
     <Card>
-      <p className="text-sm text-slate-400">Available cash</p>
-      <h2 className="mb-6 text-4xl font-bold text-white">{formatCurrency(Number(wallet.data?.cashBalance ?? 0))}</h2>
+      <p className="text-sm text-muted">Available cash</p>
+      <h2 className="mb-6 text-4xl font-bold text-foreground">{formatCurrency(Number(wallet.data?.cashBalance ?? 0))}</h2>
       <div className="space-y-3">
         {(wallet.data?.walletTxs ?? []).map((tx: any) => (
           <div key={tx.id} className="flex justify-between rounded-md border border-border bg-panel p-4">

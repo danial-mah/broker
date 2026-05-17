@@ -24,8 +24,8 @@ export default function LandingPage() {
       <section className="mx-auto grid min-h-[calc(100vh-88px)] max-w-6xl items-center gap-10 py-12 lg:grid-cols-[1.05fr_0.95fr]">
         <div>
           <p className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-primary">Mock trading platform</p>
-          <h1 className="max-w-3xl text-5xl font-bold leading-tight text-white lg:text-7xl">Broker trading dashboard</h1>
-          <p className="mt-6 max-w-xl text-lg text-slate-300">
+          <h1 className="max-w-3xl text-5xl font-bold leading-tight text-foreground lg:text-7xl">Broker trading dashboard</h1>
+          <p className="mt-6 max-w-xl text-lg text-muted">
             A production-minded paper trading workspace with realtime market updates, portfolio analytics, secure auth, and admin tooling.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
@@ -45,8 +45,8 @@ export default function LandingPage() {
             <div key={title} className="flex gap-4 rounded-md border border-border bg-panel p-4">
               <Icon className="mt-1 text-primary" size={22} />
               <div>
-                <h2 className="font-semibold text-white">{title}</h2>
-                <p className="text-sm text-slate-400">{body}</p>
+                <h2 className="font-semibold text-foreground">{title}</h2>
+                <p className="text-sm text-muted">{body}</p>
               </div>
             </div>
           ))}

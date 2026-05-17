@@ -13,7 +13,7 @@ export default function PortfolioPage() {
 
   return (
     <Card>
-      <h2 className="mb-5 text-lg font-semibold text-white">Open positions</h2>
+      <h2 className="mb-5 text-lg font-semibold text-foreground">Open positions</h2>
       <div className="grid gap-3">
         {(portfolio.data ?? []).map((position: any) => (
           <div key={position.id} className="grid gap-2 rounded-md border border-border bg-panel p-4 md:grid-cols-4">

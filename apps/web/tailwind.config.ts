@@ -6,17 +6,20 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: '#080A0F',
-        surface: '#11151E',
-        panel: '#171C27',
-        border: '#273142',
-        primary: '#2DD4BF',
-        accent: '#F8C14A',
-        danger: '#F87171',
-        success: '#4ADE80'
+        background: 'rgb(var(--color-background) / <alpha-value>)',
+        surface: 'rgb(var(--color-surface) / <alpha-value>)',
+        panel: 'rgb(var(--color-panel) / <alpha-value>)',
+        border: 'rgb(var(--color-border) / <alpha-value>)',
+        foreground: 'rgb(var(--color-foreground) / <alpha-value>)',
+        muted: 'rgb(var(--color-muted) / <alpha-value>)',
+        subtle: 'rgb(var(--color-subtle) / <alpha-value>)',
+        primary: 'rgb(var(--color-primary) / <alpha-value>)',
+        accent: 'rgb(var(--color-accent) / <alpha-value>)',
+        danger: 'rgb(var(--color-danger) / <alpha-value>)',
+        success: 'rgb(var(--color-success) / <alpha-value>)'
       },
       boxShadow: {
-        glow: '0 0 40px rgba(45, 212, 191, 0.12)'
+        glow: 'var(--shadow-glow)'
       }
     }
   },

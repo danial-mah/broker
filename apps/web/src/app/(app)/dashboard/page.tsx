@@ -39,10 +39,10 @@ export default function DashboardPage() {
         {metrics.map(([label, value, Icon]) => (
           <Card key={label}>
             <div className="flex items-center justify-between">
-              <p className="text-sm text-slate-400">{label}</p>
+              <p className="text-sm text-muted">{label}</p>
               <Icon size={18} className="text-primary" />
             </div>
-            <p className="mt-3 text-2xl font-semibold text-white">{value}</p>
+            <p className="mt-3 text-2xl font-semibold text-foreground">{value}</p>
           </Card>
         ))}
       </section>
@@ -50,8 +50,8 @@ export default function DashboardPage() {
         <Card>
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-white">Market pulse</h2>
-              <p className="text-sm text-slate-400">Mock intraday movement</p>
+              <h2 className="text-lg font-semibold text-foreground">Market pulse</h2>
+              <p className="text-sm text-muted">Mock intraday movement</p>
             </div>
             <span className="rounded-md bg-primary/10 px-3 py-1 text-sm text-primary">Live</span>
           </div>
@@ -59,27 +59,27 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">Watchlist</h2>
+            <h2 className="text-lg font-semibold text-foreground">Watchlist</h2>
             <Link href="/markets" className="text-sm font-semibold text-primary">
               Edit
             </Link>
           </div>
           <div className="space-y-3">
             {(watchlist.data ?? []).length === 0 && (
-              <p className="text-sm text-slate-400">Star assets from Markets to track them here.</p>
+              <p className="text-sm text-muted">Star assets from Markets to track them here.</p>
             )}
             {(watchlist.data ?? []).map((item: any) => (
               <Link
                 key={item.id}
                 href={`/markets/${item.asset.symbol}`}
-                className="flex items-center justify-between rounded-md border border-border px-3 py-2 transition hover:bg-slate-800"
+                className="flex items-center justify-between rounded-md border border-border px-3 py-2 transition hover:bg-panel"
               >
                 <div>
-                  <p className="font-semibold text-white">{item.asset.symbol}</p>
-                  <p className="text-xs text-slate-500">{item.asset.name}</p>
+                  <p className="font-semibold text-foreground">{item.asset.symbol}</p>
+                  <p className="text-xs text-subtle">{item.asset.name}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-white">{formatCurrency(Number(item.asset.price))}</p>
+                  <p className="font-semibold text-foreground">{formatCurrency(Number(item.asset.price))}</p>
                   <p className={Number(item.asset.change24h) >= 0 ? 'text-xs text-success' : 'text-xs text-danger'}>
                     {Number(item.asset.change24h).toFixed(2)}%
                   </p>

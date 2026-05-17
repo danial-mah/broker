@@ -15,10 +15,10 @@ export default function MarketsPage() {
 
   return (
     <Card>
-      <h2 className="mb-5 text-lg font-semibold text-white">Markets</h2>
+      <h2 className="mb-5 text-lg font-semibold text-foreground">Markets</h2>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
-          <thead className="text-slate-400">
+          <thead className="text-muted">
             <tr>
               <th className="py-3">Asset</th>
               <th>Exchange</th>
@@ -34,10 +34,10 @@ export default function MarketsPage() {
             {(assets.data ?? []).map((asset: any) => (
               <tr key={asset.id} className="border-t border-border">
                 <td className="py-4">
-                  <Link href={`/markets/${asset.symbol}`} className="font-semibold text-white">
+                  <Link href={`/markets/${asset.symbol}`} className="font-semibold text-foreground">
                     {asset.symbol}
                   </Link>
-                  <p className="text-slate-500">{asset.name}</p>
+                  <p className="text-subtle">{asset.name}</p>
                 </td>
                 <td>{asset.exchange}</td>
                 <td>{formatCurrency(Number(asset.price))}</td>
