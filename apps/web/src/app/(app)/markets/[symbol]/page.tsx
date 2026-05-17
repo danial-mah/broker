@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { MarketChart } from '@/components/market/market-chart';
+import { WatchlistButton } from '@/components/market/watchlist-button';
 import { Card } from '@/components/ui/card';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
@@ -17,8 +18,13 @@ export default function AssetDetailPage() {
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
       <Card>
-        <h2 className="text-2xl font-semibold text-white">{asset.data?.symbol ?? params.symbol}</h2>
-        <p className="mb-6 text-slate-400">{asset.data?.name}</p>
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-semibold text-white">{asset.data?.symbol ?? params.symbol}</h2>
+            <p className="text-slate-400">{asset.data?.name}</p>
+          </div>
+          <WatchlistButton symbol={asset.data?.symbol ?? params.symbol} />
+        </div>
         <MarketChart />
       </Card>
       <Card>

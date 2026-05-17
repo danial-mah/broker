@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
+import { WatchlistButton } from '@/components/market/watchlist-button';
 import { Card } from '@/components/ui/card';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
@@ -24,6 +25,9 @@ export default function MarketsPage() {
               <th>Price</th>
               <th>24h</th>
               <th>Market cap</th>
+              <th className="w-12">
+                <span className="sr-only">Watchlist</span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -41,6 +45,9 @@ export default function MarketsPage() {
                   {Number(asset.change24h).toFixed(2)}%
                 </td>
                 <td>{formatCurrency(Number(asset.marketCap))}</td>
+                <td>
+                  <WatchlistButton symbol={asset.symbol} />
+                </td>
               </tr>
             ))}
           </tbody>
