@@ -10,6 +10,7 @@ import { PrismaModule } from './modules/prisma/prisma.module';
 import { TradingModule } from './modules/trading/trading.module';
 import { UsersModule } from './modules/users/users.module';
 import { WalletModule } from './modules/wallet/wallet.module';
+import { WatchlistModule } from './modules/watchlist/watchlist.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { WalletModule } from './modules/wallet/wallet.module';
     MarketModule,
     TradingModule,
     WalletModule,
+    WatchlistModule,
     NotificationsModule,
     AdminModule
   ]
