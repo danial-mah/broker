@@ -2,6 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import { AssetNewsFeed } from '@/components/market/asset-news-feed';
 import { MarketChart } from '@/components/market/market-chart';
 import { WatchlistButton } from '@/components/market/watchlist-button';
 import { Card } from '@/components/ui/card';
@@ -27,14 +28,17 @@ export default function AssetDetailPage() {
         </div>
         <MarketChart />
       </Card>
-      <Card>
-        <h3 className="mb-4 text-lg font-semibold text-foreground">Trade ticket</h3>
-        <p className="mb-6 text-3xl font-bold text-foreground">{formatCurrency(Number(asset.data?.price ?? 0))}</p>
-        <div className="grid grid-cols-2 gap-3">
-          <button className="rounded-md bg-success px-4 py-3 font-semibold text-slate-950">Buy</button>
-          <button className="rounded-md bg-danger px-4 py-3 font-semibold text-slate-950">Sell</button>
-        </div>
-      </Card>
+      <div className="space-y-6">
+        <Card>
+          <h3 className="mb-4 text-lg font-semibold text-foreground">Trade ticket</h3>
+          <p className="mb-6 text-3xl font-bold text-foreground">{formatCurrency(Number(asset.data?.price ?? 0))}</p>
+          <div className="grid grid-cols-2 gap-3">
+            <button className="rounded-md bg-success px-4 py-3 font-semibold text-slate-950">Buy</button>
+            <button className="rounded-md bg-danger px-4 py-3 font-semibold text-slate-950">Sell</button>
+          </div>
+        </Card>
+        <AssetNewsFeed symbol={asset.data?.symbol ?? params.symbol} />
+      </div>
     </div>
   );
 }

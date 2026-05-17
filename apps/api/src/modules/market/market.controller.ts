@@ -12,6 +12,11 @@ export class MarketController {
     return this.marketService.listAssets(query);
   }
 
+  @Get('assets/:symbol/news')
+  getAssetNews(@Param('symbol') symbol: string) {
+    return this.marketService.getAssetNews(symbol);
+  }
+
   @Get('assets/:symbol')
   getAsset(@Param('symbol') symbol: string) {
     return this.marketService.getAsset(symbol);
