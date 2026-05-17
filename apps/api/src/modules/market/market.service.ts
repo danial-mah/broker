@@ -12,6 +12,51 @@ type MarketNewsItem = {
   sentiment: 'positive' | 'neutral' | 'negative';
 };
 
+type LiveMarketData = {
+  price?: number;
+  change24h?: number;
+  volume24h?: number;
+  marketCap?: number;
+  rank?: number;
+  dataSource?: string;
+  dataUpdatedAt?: string;
+};
+
+type StooqQuote = {
+  symbol: string;
+  close: number;
+  volume: number;
+  date: string;
+  time: string;
+};
+
+type CoinGeckoMarket = {
+  id: string;
+  symbol: string;
+  current_price: number;
+  market_cap: number;
+  market_cap_rank: number;
+  total_volume: number;
+  price_change_percentage_24h: number;
+  last_updated: string;
+};
+
+const stooqSymbols: Record<string, string> = {
+  AAPL: 'aapl.us',
+  NVDA: 'nvda.us',
+  VOO: 'voo.us'
+};
+
+const coinGeckoIds: Record<string, string> = {
+  BTC: 'bitcoin',
+  ETH: 'ethereum'
+};
+
+const yahooNewsSymbols: Record<string, string> = {
+  BTC: 'BTC-USD',
+  ETH: 'ETH-USD'
+};
+
 const newsBySymbol: Record<string, MarketNewsItem[]> = {
   AAPL: [
     {
@@ -141,21 +186,28 @@ export class MarketService {
       },
       orderBy: { marketCap: 'desc' }
     });
-    await this.cache.setJson(cacheKey, assets, 15);
-    return assets;
+    const assetsWithLiveData = await this.withLiveMarketData(assets);
+    await this.cache.setJson(cacheKey, assetsWithLiveData, 60);
+    return assetsWithLiveData;
   }
 
-  getAsset(symbol: string) {
-    return this.prisma.asset.findUniqueOrThrow({
+  async getAsset(symbol: string) {
+    const asset = await this.prisma.asset.findUniqueOrThrow({
       where: { symbol: symbol.toUpperCase() },
       include: { candles: { orderBy: { timestamp: 'asc' }, take: 200 } }
     });
+    return this.withLiveMarketData(asset);
   }
 
   async getAssetNews(symbol: string) {
     const asset = await this.prisma.asset.findUniqueOrThrow({
       where: { symbol: symbol.toUpperCase() }
     });
+    const liveNews = await this.fetchYahooNews(asset.symbol);
+
+    if (liveNews.length) {
+      return liveNews;
+    }
 
     return (
       newsBySymbol[asset.symbol] ?? [
@@ -194,5 +246,193 @@ export class MarketService {
       change24h: Number(updated.change24h),
       timestamp: new Date().toISOString()
     };
+  }
+
+  private async withLiveMarketData<T extends { symbol: string }>(asset: T): Promise<T & LiveMarketData>;
+  private async withLiveMarketData<T extends { symbol: string }>(assets: T[]): Promise<Array<T & LiveMarketData>>;
+  private async withLiveMarketData<T extends { symbol: string }>(input: T | T[]) {
+    const assets = Array.isArray(input) ? input : [input];
+    const liveData = await this.fetchLiveMarketData(assets.map((asset) => asset.symbol));
+    const merged = assets.map((asset) => {
+      const data = liveData[asset.symbol];
+      if (!data) {
+        return { ...asset, dataSource: 'seed' };
+      }
+
+      return {
+        ...asset,
+        price: data.price ?? (asset as T & { price?: unknown }).price,
+        change24h: data.change24h ?? (asset as T & { change24h?: unknown }).change24h,
+        volume24h: data.volume24h ?? (asset as T & { volume24h?: unknown }).volume24h,
+        marketCap: data.marketCap ?? (asset as T & { marketCap?: unknown }).marketCap,
+        rank: data.rank,
+        dataSource: data.dataSource,
+        dataUpdatedAt: data.dataUpdatedAt
+      };
+    });
+
+    return Array.isArray(input) ? merged : merged[0];
+  }
+
+  private async fetchLiveMarketData(symbols: string[]) {
+    const [stooqData, coinGeckoData] = await Promise.all([this.fetchStooqQuotes(symbols), this.fetchCoinGeckoMarkets(symbols)]);
+    return { ...stooqData, ...coinGeckoData };
+  }
+
+  private async fetchStooqQuotes(symbols: string[]) {
+    const requested = symbols.filter((symbol) => stooqSymbols[symbol]).map((symbol) => stooqSymbols[symbol]);
+    if (!requested.length) {
+      return {};
+    }
+
+    try {
+      const response = await fetch(`https://stooq.com/q/l/?s=${requested.join('+')}&f=sd2t2ohlcv&h&e=csv`);
+      if (!response.ok) {
+        return {};
+      }
+
+      const quotes = this.parseStooqCsv(await response.text());
+      const liveData: Record<string, LiveMarketData> = {};
+
+      for (const [symbol, stooqSymbol] of Object.entries(stooqSymbols)) {
+        const quote = quotes.find((item) => item.symbol.toLowerCase() === stooqSymbol.toLowerCase());
+        if (!quote) {
+          continue;
+        }
+
+        liveData[symbol] = {
+          price: quote.close,
+          volume24h: quote.volume,
+          dataSource: 'Stooq',
+          dataUpdatedAt: new Date(`${quote.date}T${quote.time}`).toISOString()
+        };
+      }
+
+      return liveData;
+    } catch {
+      return {};
+    }
+  }
+
+  private parseStooqCsv(csv: string): StooqQuote[] {
+    return csv
+      .trim()
+      .split(/\r?\n/)
+      .slice(1)
+      .map((line) => {
+        const [symbol, date, time, , , , close, volume] = line.split(',');
+        return {
+          symbol,
+          date,
+          time,
+          close: Number(close),
+          volume: Number(volume)
+        };
+      })
+      .filter((quote) => quote.symbol && Number.isFinite(quote.close));
+  }
+
+  private async fetchCoinGeckoMarkets(symbols: string[]) {
+    const ids = symbols.filter((symbol) => coinGeckoIds[symbol]).map((symbol) => coinGeckoIds[symbol]);
+    if (!ids.length) {
+      return {};
+    }
+
+    try {
+      const params = new URLSearchParams({
+        vs_currency: 'usd',
+        ids: ids.join(','),
+        price_change_percentage: '24h'
+      });
+      const response = await fetch(`https://api.coingecko.com/api/v3/coins/markets?${params}`);
+      if (!response.ok) {
+        return {};
+      }
+
+      const markets = (await response.json()) as CoinGeckoMarket[];
+      const liveData: Record<string, LiveMarketData> = {};
+
+      for (const [symbol, id] of Object.entries(coinGeckoIds)) {
+        const market = markets.find((item) => item.id === id);
+        if (!market) {
+          continue;
+        }
+
+        liveData[symbol] = {
+          price: market.current_price,
+          change24h: market.price_change_percentage_24h,
+          volume24h: market.total_volume,
+          marketCap: market.market_cap,
+          rank: market.market_cap_rank,
+          dataSource: 'CoinGecko',
+          dataUpdatedAt: market.last_updated
+        };
+      }
+
+      return liveData;
+    } catch {
+      return {};
+    }
+  }
+
+  private async fetchYahooNews(symbol: string): Promise<MarketNewsItem[]> {
+    try {
+      const feedSymbol = yahooNewsSymbols[symbol] ?? symbol;
+      const params = new URLSearchParams({ s: feedSymbol, region: 'US', lang: 'en-US' });
+      const response = await fetch(`https://feeds.finance.yahoo.com/rss/2.0/headline?${params}`);
+      if (!response.ok) {
+        return [];
+      }
+
+      return this.parseRss(await response.text()).slice(0, 8);
+    } catch {
+      return [];
+    }
+  }
+
+  private parseRss(xml: string): MarketNewsItem[] {
+    return [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].map((match, index) => {
+      const item = match[1];
+      const title = this.decodeXml(this.getXmlValue(item, 'title'));
+      const summary = this.decodeXml(this.getXmlValue(item, 'description'));
+      const url = this.decodeXml(this.getXmlValue(item, 'link'));
+      const publishedAt = new Date(this.decodeXml(this.getXmlValue(item, 'pubDate'))).toISOString();
+
+      return {
+        id: this.decodeXml(this.getXmlValue(item, 'guid')) || `${title}-${index}`,
+        title,
+        summary,
+        source: this.getNewsSource(url),
+        publishedAt,
+        url,
+        sentiment: 'neutral'
+      };
+    });
+  }
+
+  private getXmlValue(xml: string, tag: string) {
+    return xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`))?.[1]?.trim() ?? '';
+  }
+
+  private decodeXml(value: string) {
+    return value
+      .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\u00e2\u0080\u0099/g, "'")
+      .replace(/\u00e2\u0080\u009c|\u00e2\u0080\u009d/g, '"')
+      .replace(/\u00e2\u0080\u0094/g, '-')
+      .replace(/\u00e2\u0080\u0093/g, '-');
+  }
+
+  private getNewsSource(url: string) {
+    try {
+      return new URL(url).hostname.replace(/^www\./, '');
+    } catch {
+      return 'Yahoo Finance';
+    }
   }
 }

@@ -9,6 +9,19 @@ import { Card } from '@/components/ui/card';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
 
+function formatUpdatedAt(value?: string) {
+  if (!value) {
+    return 'Seed data';
+  }
+
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(new Date(value));
+}
+
 export default function AssetDetailPage() {
   const params = useParams<{ symbol: string }>();
   const asset = useQuery({
@@ -32,6 +45,22 @@ export default function AssetDetailPage() {
         <Card>
           <h3 className="mb-4 text-lg font-semibold text-foreground">Trade ticket</h3>
           <p className="mb-6 text-3xl font-bold text-foreground">{formatCurrency(Number(asset.data?.price ?? 0))}</p>
+          <div className="mb-6 grid gap-2 rounded-md border border-border bg-panel p-3 text-sm">
+            <div className="flex justify-between gap-3">
+              <span className="text-muted">Source</span>
+              <span className="font-medium text-foreground">{asset.data?.dataSource ?? 'seed'}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-muted">Updated</span>
+              <span className="font-medium text-foreground">{formatUpdatedAt(asset.data?.dataUpdatedAt)}</span>
+            </div>
+            {asset.data?.rank && (
+              <div className="flex justify-between gap-3">
+                <span className="text-muted">Market rank</span>
+                <span className="font-medium text-foreground">#{asset.data.rank}</span>
+              </div>
+            )}
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <button className="rounded-md bg-success px-4 py-3 font-semibold text-slate-950">Buy</button>
             <button className="rounded-md bg-danger px-4 py-3 font-semibold text-slate-950">Sell</button>

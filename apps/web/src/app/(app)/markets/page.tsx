@@ -24,7 +24,9 @@ export default function MarketsPage() {
               <th>Exchange</th>
               <th>Price</th>
               <th>24h</th>
+              <th>Rank</th>
               <th>Market cap</th>
+              <th>Source</th>
               <th className="w-12">
                 <span className="sr-only">Watchlist</span>
               </th>
@@ -44,7 +46,9 @@ export default function MarketsPage() {
                 <td className={Number(asset.change24h) >= 0 ? 'text-success' : 'text-danger'}>
                   {Number(asset.change24h).toFixed(2)}%
                 </td>
+                <td>{asset.rank ? `#${asset.rank}` : '-'}</td>
                 <td>{formatCurrency(Number(asset.marketCap))}</td>
+                <td className="text-muted">{asset.dataSource ?? 'seed'}</td>
                 <td>
                   <WatchlistButton symbol={asset.symbol} />
                 </td>
