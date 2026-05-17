@@ -10,6 +10,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md,css}\"",
     "db:generate": "pnpm --filter @broker/api prisma:generate",
     "db:migrate": "pnpm --filter @broker/api prisma:migrate",
+    "db:push": "pnpm --filter @broker/api prisma:push",
     "db:seed": "pnpm --filter @broker/api prisma:seed"
   },
   "workspaces": [
