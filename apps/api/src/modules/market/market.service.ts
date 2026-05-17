@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CacheService } from '../cache/cache.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -33,11 +33,61 @@ type StooqQuote = {
 type CoinGeckoMarket = {
   id: string;
   symbol: string;
+  name: string;
   current_price: number;
   market_cap: number;
   market_cap_rank: number;
   total_volume: number;
+  circulating_supply?: number;
+  total_supply?: number | null;
+  max_supply?: number | null;
+  image?: string;
+  sparkline_in_7d?: { price: number[] };
+  price_change_percentage_1h_in_currency?: number;
+  price_change_percentage_24h_in_currency?: number;
+  price_change_percentage_7d_in_currency?: number;
   price_change_percentage_24h: number;
+  last_updated: string;
+};
+
+type CoinGeckoCoin = {
+  id: string;
+  symbol: string;
+  name: string;
+  image: { large?: string; small?: string; thumb?: string };
+  description: { en?: string };
+  links: {
+    homepage?: string[];
+    whitepaper?: string;
+    blockchain_site?: string[];
+    subreddit_url?: string;
+  };
+  categories: string[];
+  market_cap_rank: number;
+  genesis_date?: string;
+  hashing_algorithm?: string;
+  sentiment_votes_up_percentage?: number;
+  sentiment_votes_down_percentage?: number;
+  market_data: {
+    current_price: { usd?: number };
+    market_cap: { usd?: number };
+    total_volume: { usd?: number };
+    fully_diluted_valuation: { usd?: number };
+    high_24h: { usd?: number };
+    low_24h: { usd?: number };
+    ath: { usd?: number };
+    ath_change_percentage: { usd?: number };
+    atl: { usd?: number };
+    atl_change_percentage: { usd?: number };
+    price_change_percentage_1h_in_currency?: { usd?: number };
+    price_change_percentage_24h_in_currency?: { usd?: number };
+    price_change_percentage_7d_in_currency?: { usd?: number };
+    price_change_percentage_30d?: number;
+    circulating_supply?: number;
+    total_supply?: number | null;
+    max_supply?: number | null;
+    sparkline_7d?: { price: number[] };
+  };
   last_updated: string;
 };
 
@@ -222,6 +272,122 @@ export class MarketService {
         }
       ]
     );
+  }
+
+  async listCryptoMarkets() {
+    const cacheKey = 'market:crypto:top';
+    const cached = await this.cache.getJson(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    try {
+      const params = new URLSearchParams({
+        vs_currency: 'usd',
+        order: 'market_cap_desc',
+        per_page: '25',
+        page: '1',
+        sparkline: 'true',
+        price_change_percentage: '1h,24h,7d'
+      });
+      const response = await fetch(`https://api.coingecko.com/api/v3/coins/markets?${params}`);
+      if (!response.ok) {
+        return [];
+      }
+
+      const markets = (await response.json()) as CoinGeckoMarket[];
+      const data = markets.map((market) => ({
+        id: market.id,
+        symbol: market.symbol.toUpperCase(),
+        name: market.name,
+        image: market.image,
+        rank: market.market_cap_rank,
+        price: market.current_price,
+        marketCap: market.market_cap,
+        volume24h: market.total_volume,
+        circulatingSupply: market.circulating_supply,
+        totalSupply: market.total_supply,
+        maxSupply: market.max_supply,
+        change1h: market.price_change_percentage_1h_in_currency,
+        change24h: market.price_change_percentage_24h_in_currency ?? market.price_change_percentage_24h,
+        change7d: market.price_change_percentage_7d_in_currency,
+        sparkline: market.sparkline_in_7d?.price ?? [],
+        dataSource: 'CoinGecko',
+        dataUpdatedAt: market.last_updated
+      }));
+
+      await this.cache.setJson(cacheKey, data, 60);
+      return data;
+    } catch {
+      return [];
+    }
+  }
+
+  async getCryptoMarket(id: string) {
+    const cacheKey = `market:crypto:${id}`;
+    const cached = await this.cache.getJson(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const params = new URLSearchParams({
+      localization: 'false',
+      tickers: 'false',
+      market_data: 'true',
+      community_data: 'false',
+      developer_data: 'false',
+      sparkline: 'true'
+    });
+    const response = await fetch(`https://api.coingecko.com/api/v3/coins/${encodeURIComponent(id)}?${params}`);
+    if (!response.ok) {
+      throw new NotFoundException('Crypto asset not found');
+    }
+
+    const coin = (await response.json()) as CoinGeckoCoin;
+    const data = {
+      id: coin.id,
+      symbol: coin.symbol.toUpperCase(),
+      name: coin.name,
+      image: coin.image.large ?? coin.image.small ?? coin.image.thumb,
+      rank: coin.market_cap_rank,
+      description: this.stripHtml(coin.description.en ?? ''),
+      categories: coin.categories.slice(0, 6),
+      genesisDate: coin.genesis_date,
+      hashingAlgorithm: coin.hashing_algorithm,
+      sentimentUp: coin.sentiment_votes_up_percentage,
+      sentimentDown: coin.sentiment_votes_down_percentage,
+      links: {
+        homepage: coin.links.homepage?.find(Boolean),
+        whitepaper: coin.links.whitepaper,
+        blockchain: coin.links.blockchain_site?.find(Boolean),
+        subreddit: coin.links.subreddit_url
+      },
+      market: {
+        price: coin.market_data.current_price.usd,
+        marketCap: coin.market_data.market_cap.usd,
+        volume24h: coin.market_data.total_volume.usd,
+        fullyDilutedValuation: coin.market_data.fully_diluted_valuation.usd,
+        high24h: coin.market_data.high_24h.usd,
+        low24h: coin.market_data.low_24h.usd,
+        ath: coin.market_data.ath.usd,
+        athChange: coin.market_data.ath_change_percentage.usd,
+        atl: coin.market_data.atl.usd,
+        atlChange: coin.market_data.atl_change_percentage.usd,
+        change1h: coin.market_data.price_change_percentage_1h_in_currency?.usd,
+        change24h: coin.market_data.price_change_percentage_24h_in_currency?.usd,
+        change7d: coin.market_data.price_change_percentage_7d_in_currency?.usd,
+        change30d: coin.market_data.price_change_percentage_30d,
+        circulatingSupply: coin.market_data.circulating_supply,
+        totalSupply: coin.market_data.total_supply,
+        maxSupply: coin.market_data.max_supply,
+        sparkline: coin.market_data.sparkline_7d?.price ?? []
+      },
+      dataSource: 'CoinGecko',
+      dataUpdatedAt: coin.last_updated
+    };
+
+    await this.cache.setJson(cacheKey, data, 60);
+    return data;
   }
 
   async randomTick() {
@@ -434,5 +600,9 @@ export class MarketService {
     } catch {
       return 'Yahoo Finance';
     }
+  }
+
+  private stripHtml(value: string) {
+    return this.decodeXml(value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
   }
 }

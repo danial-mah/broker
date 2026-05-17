@@ -12,6 +12,16 @@ export class MarketController {
     return this.marketService.listAssets(query);
   }
 
+  @Get('crypto')
+  listCryptoMarkets() {
+    return this.marketService.listCryptoMarkets();
+  }
+
+  @Get('crypto/:id')
+  getCryptoMarket(@Param('id') id: string) {
+    return this.marketService.getCryptoMarket(id);
+  }
+
   @Get('assets/:symbol/news')
   getAssetNews(@Param('symbol') symbol: string) {
     return this.marketService.getAssetNews(symbol);

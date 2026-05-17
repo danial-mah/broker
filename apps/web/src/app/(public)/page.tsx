@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight, LineChart, Lock, type LucideIcon, Zap } from 'lucide-react';
+import { CryptoMarketTable } from '@/components/market/crypto-market-table';
 import { MarketSummaryStrip } from '@/components/market/market-summary-strip';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -23,6 +24,7 @@ export default function LandingPage() {
         </Button>
       </nav>
       <MarketSummaryStrip />
+      <CryptoMarketTable />
       <section className="mx-auto grid min-h-[calc(100vh-88px)] max-w-6xl items-center gap-10 py-12 lg:grid-cols-[1.05fr_0.95fr]">
         <div>
           <p className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-primary">Mock trading platform</p>
